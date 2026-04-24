@@ -1,0 +1,225 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+}
+
+// ─── AUTH ────────────────────────────────────────────────
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  avatarUrl String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  accounts     Account[]
+  categories   Category[]
+  goals        Goal[]
+  budgets      Budget[]
+  transactions Transaction[]
+  sessions     Session[]
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ─── COMPTES BANCAIRES ───────────────────────────────────
+
+model Account {
+  id           String      @id @default(cuid())
+  userId       String
+  name         String
+  type         AccountType
+  bank         String?
+  color        String?
+  icon         String?
+  balance      Decimal     @default(0) @db.Decimal(12, 2)
+  currency     String      @default("CHF")
+  isActive     Boolean     @default(true)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  user                User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions        Transaction[]
+  transfersFrom       Transfer[]    @relation("TransferFrom")
+  transfersTo         Transfer[]    @relation("TransferTo")
+}
+
+enum AccountType {
+  CHECKING      // Compte courant
+  JOINT         // Compte joint
+  SAVINGS       // Épargne
+  THIRD_PILLAR  // 3e pilier A
+  CASH          // Espèces
+  OTHER
+}
+
+// ─── CATÉGORIES ──────────────────────────────────────────
+
+model Category {
+  id        String   @id @default(cuid())
+  userId    String?  // null = catégorie système par défaut
+  name      String
+  icon      String?
+  color     String?
+  isSystem  Boolean  @default(false)
+
+  user         User?         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions Transaction[]
+  budgets      Budget[]
+}
+
+// ─── TRANSACTIONS ─────────────────────────────────────────
+
+model Transaction {
+  id          String          @id @default(cuid())
+  userId      String
+  accountId   String
+  categoryId  String?
+  amount      Decimal         @db.Decimal(12, 2)
+  type        TransactionType
+  description String?
+  merchant    String?
+  date        DateTime
+  isRecurring Boolean         @default(false)
+  recurringId String?
+  notes       String?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  // Remboursement assurance
+  isReimbursable      Boolean              @default(false)
+  reimbursementStatus ReimbursementStatus? 
+  insuranceType       InsuranceType?
+  reimbursedAmount    Decimal?             @db.Decimal(12, 2)
+  reimbursedAt        DateTime?
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  account   Account   @relation(fields: [accountId], references: [id])
+  category  Category? @relation(fields: [categoryId], references: [id])
+  recurring RecurringTransaction? @relation(fields: [recurringId], references: [id])
+}
+
+enum TransactionType {
+  INCOME
+  EXPENSE
+  TRANSFER
+}
+
+enum ReimbursementStatus {
+  PENDING   // En attente de remboursement
+  PARTIAL   // Partiellement remboursé
+  COMPLETED // Totalement remboursé
+}
+
+enum InsuranceType {
+  LAMAL   // Assurance de base
+  LCA     // Assurance complémentaire
+  OTHER
+}
+
+// ─── TRANSACTIONS RÉCURRENTES ─────────────────────────────
+
+model RecurringTransaction {
+  id          String    @id @default(cuid())
+  userId      String
+  name        String
+  amount      Decimal   @db.Decimal(12, 2)
+  frequency   Frequency
+  nextDate    DateTime
+  endDate     DateTime?
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+
+  transactions Transaction[]
+}
+
+enum Frequency {
+  DAILY
+  WEEKLY
+  BIWEEKLY
+  MONTHLY
+  QUARTERLY
+  YEARLY
+}
+
+// ─── BUDGET MENSUEL ───────────────────────────────────────
+
+model Budget {
+  id         String   @id @default(cuid())
+  userId     String
+  categoryId String
+  amount     Decimal  @db.Decimal(12, 2)
+  month      Int      // 1-12
+  year       Int
+  createdAt  DateTime @default(now())
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category Category @relation(fields: [categoryId], references: [id])
+
+  @@unique([userId, categoryId, month, year])
+}
+
+// ─── OBJECTIFS D'ÉPARGNE ──────────────────────────────────
+
+model Goal {
+  id            String     @id @default(cuid())
+  userId        String
+  name          String
+  icon          String?
+  targetAmount  Decimal    @db.Decimal(12, 2)
+  currentAmount Decimal    @default(0) @db.Decimal(12, 2)
+  targetDate    DateTime?
+  monthlyTarget Decimal?   @db.Decimal(12, 2)
+  type          GoalType
+  isCompleted   Boolean    @default(false)
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  user         User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  contributions GoalContribution[]
+}
+
+enum GoalType {
+  VACATION      // Vacances
+  EMERGENCY     // Fonds d'urgence
+  THIRD_PILLAR  // 3e pilier
+  PURCHASE      // Achat spécifique
+  OTHER
+}
+
+model GoalContribution {
+  id        String   @id @default(cuid())
+  goalId    String
+  amount    Decimal  @db.Decimal(12, 2)
+  date      DateTime @default(now())
+  note      String?
+
+  goal Goal @relation(fields: [goalId], references: [id], onDelete: Cascade)
+}
+
+// ─── TRANSFERTS INTER-COMPTES ─────────────────────────────
+
+model Transfer {
+  id          String   @id @default(cuid())
+  fromAccount String
+  toAccount   String
+  amount      Decimal  @db.Decimal(12, 2)
+  date        DateTime
+  note        String?
+  createdAt   DateTime @default(now())
+
+  from Account @relation("TransferFrom", fields: [fromAccount], references: [id])
+  to   Account @relation("TransferTo", fields: [toAccount], references: [id])
+}
