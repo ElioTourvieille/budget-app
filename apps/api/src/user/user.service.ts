@@ -11,7 +11,7 @@ export class UserService {
       select: {
         id: true,
         email: true,
-        name: true,
+        firstName: true,
         avatarUrl: true,
         createdAt: true,
         // On n'expose jamais le password
@@ -36,7 +36,7 @@ export class UserService {
       select: {
         id: true,
         email: true,
-        name: true,
+        firstName: true,
         avatarUrl: true,
         updatedAt: true,
       },

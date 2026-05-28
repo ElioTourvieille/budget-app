@@ -11,17 +11,19 @@ datasource db {
 model User {
   id        String   @id @default(cuid())
   email     String   @unique
-  name      String?
+  firstName String?
+  password  String
   avatarUrl String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  accounts     Account[]
-  categories   Category[]
-  goals        Goal[]
-  budgets      Budget[]
-  transactions Transaction[]
-  sessions     Session[]
+  accounts            Account[]
+  categories          Category[]
+  goals               Goal[]
+  budgets             Budget[]
+  transactions        Transaction[]
+  sessions            Session[]
+  passwordResetTokens PasswordResetToken[]
 }
 
 model Session {
@@ -30,6 +32,17 @@ model Session {
   token     String   @unique
   expiresAt DateTime
   createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String
+  token     String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
