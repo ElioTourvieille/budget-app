@@ -7,6 +7,7 @@ import { AccountModule } from './account/account.module';
 import { TransactionModule } from './transaction/transaction.module';
 import { BudgetModule } from './budget/budget.module';
 import { CategoryModule } from './category/category.module';
+import { GoalModule } from './goal/goal.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { CategoryModule } from './category/category.module';
     CategoryModule,
     TransactionModule,
     BudgetModule,
+    GoalModule,
   ],
 })
 export class AppModule {}
