@@ -6,6 +6,7 @@ import { UserModule } from './user/user.module';
 import { AccountModule } from './account/account.module';
 import { TransactionModule } from './transaction/transaction.module';
 import { BudgetModule } from './budget/budget.module';
+import { CategoryModule } from './category/category.module';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { BudgetModule } from './budget/budget.module';
     AuthModule,
     UserModule,
     AccountModule,
+    CategoryModule,
     TransactionModule,
     BudgetModule,
   ],
