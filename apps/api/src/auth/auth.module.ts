@@ -4,7 +4,7 @@ import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { JwtStrategy } from './jwt.strategy';
 import { UserModule } from 'src/user/user.module';
-import { MailerModule } from 'src/mailer/mailer.module';
+//import { MailerModule } from 'src/mailer/mailer.module';
 
 @Module({
   imports: [
@@ -14,7 +14,7 @@ import { MailerModule } from 'src/mailer/mailer.module';
       signOptions: { expiresIn: '7d' }, // 7j plus réaliste qu'1h
     }),
     UserModule,
-    MailerModule,
+    //MailerModule,
   ],
   providers: [AuthService, JwtStrategy],
   controllers: [AuthController],
