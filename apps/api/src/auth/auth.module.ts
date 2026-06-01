@@ -1,20 +1,23 @@
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { JwtStrategy } from './jwt.strategy';
 import { UserModule } from 'src/user/user.module';
-//import { MailerModule } from 'src/mailer/mailer.module';
 
 @Module({
   imports: [
-    JwtModule.register({
+    JwtModule.registerAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
       global: true,
-      secret: process.env.JWT_SECRET,
-      signOptions: { expiresIn: '7d' }, // 7j plus réaliste qu'1h
+      useFactory: (config: ConfigService) => ({
+        secret: config.getOrThrow<string>('JWT_SECRET'),
+        signOptions: { expiresIn: '7d' },
+      }),
     }),
     UserModule,
-    //MailerModule,
   ],
   providers: [AuthService, JwtStrategy],
   controllers: [AuthController],
