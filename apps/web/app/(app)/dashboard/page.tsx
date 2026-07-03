@@ -1,18 +1,30 @@
 'use client';
 
 import { useUser } from '@/lib/stores/auth.store';
+import { useAccounts } from '@/lib/queries';
+import { DashboardContent } from './_components/dashboard-content';
+import { DashboardSkeleton } from './_components/dashboard-skeleton';
+import { OnboardingEmptyState } from './_components/onboarding-empty-state';
 
 export default function DashboardPage() {
   const user = useUser();
+  const accountsQuery = useAccounts();
+
+  if (accountsQuery.isLoading) {
+    return <DashboardSkeleton />;
+  }
+
+  const accounts = accountsQuery.data?.accounts ?? [];
+
+  if (accounts.length === 0) {
+    return <OnboardingEmptyState firstName={user?.firstName} />;
+  }
 
   return (
-    <div className="p-6 max-w-2xl mx-auto">
-      <h1 className="text-2xl font-semibold">
-        Bonjour {user?.firstName ?? 'toi'} 👋
-      </h1>
-      <p className="mt-1 text-sm text-muted-foreground">
-        Ton dashboard arrive bientôt.
-      </p>
-    </div>
+    <DashboardContent
+      firstName={user?.firstName}
+      accounts={accounts}
+      totalBalance={accountsQuery.data?.totalBalance ?? 0}
+    />
   );
 }
