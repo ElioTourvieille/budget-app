@@ -20,7 +20,7 @@ export function BalanceCard({
     <Card>
       <div>
         <p className="text-sm text-muted-foreground">Solde consolidé</p>
-        <p className="text-3xl font-semibold tracking-tight mt-1">
+        <p className="font-heading text-3xl font-bold tracking-tight mt-1">
           {formatCurrency(totalBalance)}
         </p>
       </div>

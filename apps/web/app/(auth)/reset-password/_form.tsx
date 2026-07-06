@@ -68,7 +68,7 @@ export function ResetPasswordForm() {
   if (done && !token) {
     return (
       <div className="text-center py-4">
-        <CheckCircle className="size-12 mx-auto mb-4 text-[#2d6a4f]" />
+        <CheckCircle className="size-12 mx-auto mb-4 text-success" />
         <h1 className="text-xl font-semibold mb-2">Email envoyé !</h1>
         <p className="text-sm text-muted-foreground mb-6">
           Vérifie ta boîte mail. Le lien est valable 30 minutes.
@@ -86,7 +86,7 @@ export function ResetPasswordForm() {
   if (done && token) {
     return (
       <div className="text-center py-4">
-        <CheckCircle className="size-12 mx-auto mb-4 text-[#2d6a4f]" />
+        <CheckCircle className="size-12 mx-auto mb-4 text-success" />
         <h1 className="text-xl font-semibold mb-2">Mot de passe mis à jour !</h1>
         <p className="text-sm text-muted-foreground">
           Redirection vers la connexion…

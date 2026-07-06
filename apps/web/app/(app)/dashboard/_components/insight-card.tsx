@@ -4,7 +4,7 @@ import { Sparkles, RotateCw } from 'lucide-react';
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useInsight } from '@/lib/queries';
-import { InsightMarkdown } from './insight-markdown';
+import { InsightMarkdown } from '@/components/insight-markdown';
 
 export function InsightCard() {
   // staleTime (6h) matches le cache serveur — pas de re-fetch tant que les
@@ -13,9 +13,9 @@ export function InsightCard() {
   const { data, isLoading, isFetching, isError, refetch } = useInsight({ type: 'summary' });
 
   return (
-    <Card className="bg-primary text-primary-foreground border-transparent">
+    <Card className="bg-accent border-transparent">
       <CardHeader>
-        <CardTitle className="flex items-center gap-1.5 text-primary-foreground">
+        <CardTitle className="flex items-center gap-1.5 text-accent-foreground">
           <Sparkles className="size-4" />
           Insight du jour
         </CardTitle>
@@ -24,7 +24,7 @@ export function InsightCard() {
           onClick={() => refetch()}
           disabled={isFetching}
           aria-label="Actualiser l'analyse"
-          className="text-primary-foreground/70 hover:text-primary-foreground transition-colors disabled:opacity-40"
+          className="text-accent-foreground/60 hover:text-accent-foreground transition-colors disabled:opacity-40"
         >
           <RotateCw className={isFetching ? 'size-3.5 animate-spin' : 'size-3.5'} />
         </button>
@@ -32,29 +32,29 @@ export function InsightCard() {
 
       {isLoading ? (
         <div className="space-y-2">
-          <Skeleton className="h-4 w-full bg-primary-foreground/15" />
-          <Skeleton className="h-4 w-5/6 bg-primary-foreground/15" />
-          <Skeleton className="h-4 w-2/3 bg-primary-foreground/15" />
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-5/6" />
+          <Skeleton className="h-4 w-2/3" />
         </div>
       ) : isError ? (
         <div className="flex items-center justify-between gap-3">
-          <p className="text-sm text-primary-foreground/80">
+          <p className="text-sm text-foreground/70">
             L&apos;analyse IA est temporairement indisponible.
           </p>
           <button
             type="button"
             onClick={() => refetch()}
-            className="text-xs font-medium underline underline-offset-2 shrink-0"
+            className="text-xs font-medium text-accent-foreground underline underline-offset-2 shrink-0"
           >
             Réessayer
           </button>
         </div>
       ) : data ? (
-        <div className="[&_strong]:font-semibold [&_p]:text-primary-foreground/90 [&_li]:text-primary-foreground/90 [&_h4]:text-primary-foreground">
+        <div className="[&_strong]:font-semibold [&_h4]:text-accent-foreground">
           <InsightMarkdown content={data.content} />
         </div>
       ) : (
-        <p className="text-sm text-primary-foreground/80">
+        <p className="text-sm text-foreground/70">
           Pas encore assez de données pour générer une analyse.
         </p>
       )}
