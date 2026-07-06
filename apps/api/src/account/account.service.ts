@@ -7,25 +7,26 @@ import {
   import { CreateAccountDto } from './dto/create-account.dto';
   import { UpdateAccountDto } from './dto/update-account.dto';
   import { UpdateBalanceDto } from './dto/update-balance.dto';
-  
+  import { QueryAccountDto } from './dto/query-account.dto';
+
   @Injectable()
   export class AccountService {
     constructor(private readonly prisma: PrismaService) {}
-  
+
     // ─── GET ALL ──────────────────────────────────────────────────────
-  
-    async getAccounts({ userId }: { userId: string }) {
+
+    async getAccounts({ userId, query }: { userId: string; query?: QueryAccountDto }) {
       const accounts = await this.prisma.account.findMany({
-        where: { userId, isActive: true },
+        where: { userId, ...(query?.includeInactive ? {} : { isActive: true }) },
         orderBy: { createdAt: 'asc' },
       });
-  
-      // Calcul du solde total consolidé
-      const totalBalance = accounts.reduce(
-        (sum, acc) => sum + Number(acc.balance),
-        0,
-      );
-  
+
+      // Le solde consolidé ne compte que les comptes actifs, même si des
+      // comptes désactivés sont inclus dans la réponse (includeInactive).
+      const totalBalance = accounts
+        .filter((acc) => acc.isActive)
+        .reduce((sum, acc) => sum + Number(acc.balance), 0);
+
       return { accounts, totalBalance };
     }
   

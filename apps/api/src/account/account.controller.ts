@@ -6,6 +6,7 @@ import {
     Param,
     Patch,
     Post,
+    Query,
     Request,
     UseGuards,
   } from '@nestjs/common';
@@ -15,6 +16,7 @@ import {
   import { CreateAccountDto } from './dto/create-account.dto';
   import { UpdateAccountDto } from './dto/update-account.dto';
   import { UpdateBalanceDto } from './dto/update-balance.dto';
+  import { QueryAccountDto } from './dto/query-account.dto';
   
   @Controller('accounts')
   @UseGuards(JwtAuthGuard)
@@ -22,8 +24,8 @@ import {
     constructor(private readonly accountService: AccountService) {}
   
     @Get()
-    async getAccounts(@Request() req: RequestWithUser) {
-      return this.accountService.getAccounts({ userId: req.user.userId });
+    async getAccounts(@Query() query: QueryAccountDto, @Request() req: RequestWithUser) {
+      return this.accountService.getAccounts({ userId: req.user.userId, query });
     }
   
     @Get(':id')

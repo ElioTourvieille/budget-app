@@ -1,19 +1,11 @@
 'use client';
 
 import Link from 'next/link';
-import { Wallet, Users, PiggyBank, Landmark, Banknote, CircleDollarSign } from 'lucide-react';
+import { CircleDollarSign } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { formatCurrency } from '@/lib/utils';
-import type { Account, AccountType } from '@/lib/api/types';
-
-const ACCOUNT_ICONS: Record<AccountType, typeof Wallet> = {
-  CHECKING: Wallet,
-  JOINT: Users,
-  SAVINGS: PiggyBank,
-  THIRD_PILLAR: Landmark,
-  CASH: Banknote,
-  OTHER: CircleDollarSign,
-};
+import { ACCOUNT_TYPE_ICONS } from '@/lib/account-visuals';
+import type { Account } from '@/lib/api/types';
 
 export function BalanceCard({
   accounts,
@@ -38,7 +30,7 @@ export function BalanceCard({
       ) : (
         <div className="space-y-1">
           {active.map((account) => {
-            const Icon = ACCOUNT_ICONS[account.type] ?? CircleDollarSign;
+            const Icon = ACCOUNT_TYPE_ICONS[account.type] ?? CircleDollarSign;
             return (
               <div
                 key={account.id}

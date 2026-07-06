@@ -16,11 +16,16 @@ export interface UpdateAccountInput {
   bank?: string;
   color?: string;
   icon?: string;
+  isActive?: boolean;
+}
+
+export interface ListAccountsParams {
+  includeInactive?: boolean;
 }
 
 export const accountsApi = {
-  list: () =>
-    fetcher.get<AccountsResponse>('/accounts'),
+  list: (params?: ListAccountsParams) =>
+    fetcher.get<AccountsResponse>('/accounts', params),
 
   getById: (id: string) =>
     fetcher.get<Account>(`/accounts/${id}`),

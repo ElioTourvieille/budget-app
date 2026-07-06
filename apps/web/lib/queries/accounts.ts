@@ -1,12 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { accountsApi } from '@/lib/api/accounts';
-import type { CreateAccountInput, UpdateAccountInput } from '@/lib/api/accounts';
+import type { CreateAccountInput, ListAccountsParams, UpdateAccountInput } from '@/lib/api/accounts';
 import { queryKeys } from './keys';
 
-export function useAccounts() {
+export function useAccounts(params?: ListAccountsParams) {
   return useQuery({
-    queryKey: queryKeys.accounts.list(),
-    queryFn:  () => accountsApi.list(),
+    queryKey: queryKeys.accounts.list(params),
+    queryFn:  () => accountsApi.list(params),
   });
 }
 
@@ -35,7 +35,7 @@ export function useUpdateAccount() {
       accountsApi.update(id, data),
     onSuccess: (account) => {
       qc.setQueryData(queryKeys.accounts.detail(account.id), account);
-      qc.invalidateQueries({ queryKey: queryKeys.accounts.list() });
+      qc.invalidateQueries({ queryKey: queryKeys.accounts.all });
     },
   });
 }
@@ -47,7 +47,7 @@ export function useUpdateAccountBalance() {
       accountsApi.updateBalance(id, balance),
     onSuccess: (account) => {
       qc.setQueryData(queryKeys.accounts.detail(account.id), account);
-      qc.invalidateQueries({ queryKey: queryKeys.accounts.list() });
+      qc.invalidateQueries({ queryKey: queryKeys.accounts.all });
     },
   });
 }

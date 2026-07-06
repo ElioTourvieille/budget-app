@@ -1,14 +1,15 @@
 import type { ListTransactionsParams } from '@/lib/api/transactions';
 import type { ListCategoriesParams } from '@/lib/api/categories';
+import type { ListAccountsParams } from '@/lib/api/accounts';
 import type { ListBudgetsParams } from '@/lib/api/budgets';
 import type { ListGoalsParams } from '@/lib/api/goals';
 import type { GenerateInsightParams } from '@/lib/api/insights';
 
 export const queryKeys = {
   accounts: {
-    all:    ['accounts']                        as const,
-    list:   () => ['accounts', 'list']          as const,
-    detail: (id: string) => ['accounts', id]    as const,
+    all:    ['accounts']                                        as const,
+    list:   (p?: ListAccountsParams) => ['accounts', 'list', p] as const,
+    detail: (id: string) => ['accounts', id]                    as const,
   },
 
   categories: {
