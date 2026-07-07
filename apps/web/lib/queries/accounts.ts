@@ -1,7 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import { accountsApi } from '@/lib/api/accounts';
 import type { CreateAccountInput, ListAccountsParams, UpdateAccountInput } from '@/lib/api/accounts';
+import { ApiError } from '@/lib/api/client';
 import { queryKeys } from './keys';
+
+function errorMessage(err: unknown, fallback: string) {
+  return err instanceof ApiError ? err.message : fallback;
+}
 
 export function useAccounts(params?: ListAccountsParams) {
   return useQuery({
@@ -24,6 +30,10 @@ export function useCreateAccount() {
     mutationFn: (data: CreateAccountInput) => accountsApi.create(data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: queryKeys.accounts.all });
+      toast.success('Compte créé');
+    },
+    onError: (err) => {
+      toast.error(errorMessage(err, 'Impossible de créer le compte'));
     },
   });
 }
@@ -36,6 +46,10 @@ export function useUpdateAccount() {
     onSuccess: (account) => {
       qc.setQueryData(queryKeys.accounts.detail(account.id), account);
       qc.invalidateQueries({ queryKey: queryKeys.accounts.all });
+      toast.success('Compte mis à jour');
+    },
+    onError: (err) => {
+      toast.error(errorMessage(err, 'Impossible de mettre à jour le compte'));
     },
   });
 }
@@ -48,6 +62,10 @@ export function useUpdateAccountBalance() {
     onSuccess: (account) => {
       qc.setQueryData(queryKeys.accounts.detail(account.id), account);
       qc.invalidateQueries({ queryKey: queryKeys.accounts.all });
+      toast.success('Solde mis à jour');
+    },
+    onError: (err) => {
+      toast.error(errorMessage(err, 'Impossible de mettre à jour le solde'));
     },
   });
 }
@@ -58,6 +76,10 @@ export function useDeleteAccount() {
     mutationFn: (id: string) => accountsApi.delete(id),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: queryKeys.accounts.all });
+      toast.success('Compte désactivé');
+    },
+    onError: (err) => {
+      toast.error(errorMessage(err, 'Impossible de désactiver le compte'));
     },
   });
 }

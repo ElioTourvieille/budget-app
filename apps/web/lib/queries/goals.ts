@@ -1,7 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import { goalsApi } from '@/lib/api/goals';
 import type { CreateContributionInput, CreateGoalInput, ListGoalsParams, UpdateGoalInput } from '@/lib/api/goals';
+import { ApiError } from '@/lib/api/client';
 import { queryKeys } from './keys';
+
+function errorMessage(err: unknown, fallback: string) {
+  return err instanceof ApiError ? err.message : fallback;
+}
 
 export function useGoals(params?: ListGoalsParams) {
   return useQuery({
@@ -24,6 +30,10 @@ export function useCreateGoal() {
     mutationFn: (data: CreateGoalInput) => goalsApi.create(data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: queryKeys.goals.all });
+      toast.success('Objectif créé');
+    },
+    onError: (err) => {
+      toast.error(errorMessage(err, "Impossible de créer l'objectif"));
     },
   });
 }
@@ -70,6 +80,10 @@ export function useAddContribution() {
       // Refresh the goal detail to get updated currentAmount + progress
       qc.invalidateQueries({ queryKey: queryKeys.goals.detail(goalId) });
       qc.invalidateQueries({ queryKey: queryKeys.goals.all });
+      toast.success('Versement ajouté');
+    },
+    onError: (err) => {
+      toast.error(errorMessage(err, "Impossible d'ajouter le versement"));
     },
   });
 }

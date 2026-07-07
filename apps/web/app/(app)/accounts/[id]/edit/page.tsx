@@ -8,7 +8,6 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAccount, useUpdateAccount } from '@/lib/queries';
 import { cn } from '@/lib/utils';
-import { ApiError } from '@/lib/api';
 
 const COLOR_PRESETS = [
   '#4A7C59', '#2563EB', '#7C3AED', '#B45309',
@@ -24,7 +23,6 @@ export default function EditAccountPage() {
   const [name, setName] = useState('');
   const [bank, setBank] = useState('');
   const [color, setColor] = useState<string | undefined>(undefined);
-  const [error, setError] = useState('');
 
   useEffect(() => {
     if (!account) return;
@@ -35,17 +33,14 @@ export default function EditAccountPage() {
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setError('');
     try {
       await updateAccount.mutateAsync({
         id: params.id,
         data: { name, bank: bank || undefined, color },
       });
       router.replace('/accounts');
-    } catch (err) {
-      setError(
-        err instanceof ApiError ? err.message : 'Une erreur s\'est produite. Réessaie.',
-      );
+    } catch {
+      // Le toast d'erreur est déjà affiché par useUpdateAccount (onError).
     }
   }
 
@@ -85,12 +80,6 @@ export default function EditAccountPage() {
 
       <h1 className="text-xl font-semibold mb-1">Modifier le compte</h1>
       <p className="text-sm text-muted-foreground mb-6">{account.name}</p>
-
-      {error && (
-        <div className="mb-4 p-3 rounded-lg bg-destructive/10 text-destructive text-sm">
-          {error}
-        </div>
-      )}
 
       <form onSubmit={onSubmit} className="space-y-4">
         <div>

@@ -1,11 +1,17 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import { transactionsApi } from '@/lib/api/transactions';
 import type {
   CreateTransactionInput,
   ListTransactionsParams,
   UpdateTransactionInput,
 } from '@/lib/api/transactions';
+import { ApiError } from '@/lib/api/client';
 import { queryKeys } from './keys';
+
+function errorMessage(err: unknown, fallback: string) {
+  return err instanceof ApiError ? err.message : fallback;
+}
 
 export function useTransactions(params?: ListTransactionsParams) {
   return useQuery({
@@ -44,6 +50,10 @@ export function useUpdateTransaction() {
       qc.setQueryData(queryKeys.transactions.detail(transaction.id), transaction);
       qc.invalidateQueries({ queryKey: queryKeys.transactions.all });
       qc.invalidateQueries({ queryKey: queryKeys.budgets.all });
+      toast.success('Transaction mise à jour');
+    },
+    onError: (err) => {
+      toast.error(errorMessage(err, 'Impossible de mettre à jour la transaction'));
     },
   });
 }

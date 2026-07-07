@@ -3,6 +3,7 @@ import { Fredoka, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import { AuthInitializer } from "@/components/auth-initializer";
 import { QueryProvider } from "@/components/providers/query-provider";
+import { Toaster } from "@/components/ui/sonner";
 
 const fredoka = Fredoka({
   subsets: ["latin"],
@@ -33,6 +34,7 @@ export default function RootLayout({
         <QueryProvider>
           <AuthInitializer />
           {children}
+          <Toaster />
         </QueryProvider>
       </body>
     </html>

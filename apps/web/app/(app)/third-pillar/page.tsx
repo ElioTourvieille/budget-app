@@ -12,7 +12,6 @@ import {
   useGoals,
 } from '@/lib/queries';
 import { formatCurrency, formatShortDate } from '@/lib/utils';
-import { ApiError } from '@/lib/api';
 
 const CURRENT_YEAR = new Date().getFullYear();
 const PLAFOND_2026 = 7056;
@@ -54,7 +53,6 @@ export default function ThirdPillarPage() {
 function ThirdPillarDetail({ goal }: { goal: NonNullable<ReturnType<typeof useGoal>['data']> }) {
   const addContribution = useAddContribution();
   const [amount, setAmount] = useState('');
-  const [error, setError] = useState('');
 
   const target = Number(goal.targetAmount);
   const current = Number(goal.currentAmount);
@@ -73,14 +71,13 @@ function ThirdPillarDetail({ goal }: { goal: NonNullable<ReturnType<typeof useGo
 
   async function onAddContribution(e: React.FormEvent) {
     e.preventDefault();
-    setError('');
     const value = Number(amount);
     if (!value || value <= 0) return;
     try {
       await addContribution.mutateAsync({ goalId: goal.id, data: { amount: value } });
       setAmount('');
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Une erreur s'est produite.");
+    } catch {
+      // Le toast d'erreur est déjà affiché par useAddContribution (onError).
     }
   }
 
@@ -114,9 +111,6 @@ function ThirdPillarDetail({ goal }: { goal: NonNullable<ReturnType<typeof useGo
         <CardHeader>
           <CardTitle>Nouveau versement</CardTitle>
         </CardHeader>
-        {error && (
-          <p className="text-sm text-destructive">{error}</p>
-        )}
         <form onSubmit={onAddContribution} className="flex items-center gap-2">
           <input
             type="number"
@@ -161,11 +155,9 @@ function CreateThirdPillarGoal() {
   const createGoal = useCreateGoal();
   const [targetAmount, setTargetAmount] = useState(String(PLAFOND_2026));
   const [monthlyTarget, setMonthlyTarget] = useState('');
-  const [error, setError] = useState('');
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setError('');
     try {
       await createGoal.mutateAsync({
         name: `3e pilier A ${CURRENT_YEAR}`,
@@ -174,8 +166,8 @@ function CreateThirdPillarGoal() {
         monthlyTarget: monthlyTarget ? Number(monthlyTarget) : undefined,
         targetDate: `${CURRENT_YEAR}-12-31`,
       });
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Une erreur s'est produite.");
+    } catch {
+      // Le toast d'erreur est déjà affiché par useCreateGoal (onError).
     }
   }
 
@@ -185,12 +177,6 @@ function CreateThirdPillarGoal() {
       <p className="text-sm text-muted-foreground mb-6">
         Suis ta progression vers le plafond légal {CURRENT_YEAR}.
       </p>
-
-      {error && (
-        <div className="mb-4 p-3 rounded-lg bg-destructive/10 text-destructive text-sm">
-          {error}
-        </div>
-      )}
 
       <form onSubmit={onSubmit} className="space-y-4">
         <div>

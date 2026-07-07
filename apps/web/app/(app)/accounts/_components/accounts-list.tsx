@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { toast } from 'sonner';
 import { useDeleteAccount } from '@/lib/queries';
 import { AccountRow } from './account-row';
 import type { Account } from '@/lib/api/types';
@@ -11,12 +12,19 @@ export function AccountsList({ accounts }: { accounts: Account[] }) {
   const active = accounts.filter((a) => a.isActive);
   const inactive = accounts.filter((a) => !a.isActive);
 
-  function handleDeactivate(id: string) {
-    const confirmed = window.confirm(
-      'Désactiver ce compte ? Il ne sera plus compté dans ton solde consolidé, mais son historique de transactions est conservé.',
-    );
-    if (!confirmed) return;
-    deleteAccount.mutate(id);
+  function handleDeactivate(account: Account) {
+    toast(`Désactiver « ${account.name} » ?`, {
+      description:
+        'Il ne sera plus compté dans ton solde consolidé, mais son historique de transactions est conservé.',
+      action: {
+        label: 'Désactiver',
+        onClick: () => deleteAccount.mutate(account.id),
+      },
+      cancel: {
+        label: 'Annuler',
+        onClick: () => {},
+      },
+    });
   }
 
   if (accounts.length === 0) {

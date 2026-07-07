@@ -7,7 +7,6 @@ import { ArrowLeft, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useCreateAccount } from '@/lib/queries';
 import { ACCOUNT_TYPE_LABELS } from '@/lib/account-visuals';
-import { ApiError } from '@/lib/api';
 import type { AccountType } from '@/lib/api/types';
 
 const ACCOUNT_TYPES = Object.keys(ACCOUNT_TYPE_LABELS) as AccountType[];
@@ -19,18 +18,14 @@ export default function NewAccountPage() {
   const [name, setName] = useState('');
   const [type, setType] = useState<AccountType>('CHECKING');
   const [bank, setBank] = useState('');
-  const [error, setError] = useState('');
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setError('');
     try {
       await createAccount.mutateAsync({ name, type, bank: bank || undefined });
       router.replace('/accounts');
-    } catch (err) {
-      setError(
-        err instanceof ApiError ? err.message : 'Une erreur s\'est produite. Réessaie.',
-      );
+    } catch {
+      // Le toast d'erreur est déjà affiché par useCreateAccount (onError).
     }
   }
 
@@ -48,12 +43,6 @@ export default function NewAccountPage() {
       <p className="text-sm text-muted-foreground mb-6">
         Ajoute un compte pour suivre son solde dans Klear.
       </p>
-
-      {error && (
-        <div className="mb-4 p-3 rounded-lg bg-destructive/10 text-destructive text-sm">
-          {error}
-        </div>
-      )}
 
       <form onSubmit={onSubmit} className="space-y-4">
         <div>

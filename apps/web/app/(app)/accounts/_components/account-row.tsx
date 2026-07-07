@@ -13,7 +13,7 @@ export function AccountRow({
   onDeactivate,
 }: {
   account: Account;
-  onDeactivate: (id: string) => void;
+  onDeactivate: (account: Account) => void;
 }) {
   const Icon = ACCOUNT_TYPE_ICONS[account.type] ?? CircleDollarSign;
   const updateBalance = useUpdateAccountBalance();
@@ -107,7 +107,7 @@ export function AccountRow({
         {account.isActive ? (
           <button
             type="button"
-            onClick={() => onDeactivate(account.id)}
+            onClick={() => onDeactivate(account)}
             aria-label="Désactiver le compte"
             className="text-muted-foreground hover:text-destructive transition-colors p-1.5 rounded-lg hover:bg-destructive/10"
           >
