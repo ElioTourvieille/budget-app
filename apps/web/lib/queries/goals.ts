@@ -46,6 +46,10 @@ export function useUpdateGoal() {
     onSuccess: (goal) => {
       qc.setQueryData(queryKeys.goals.detail(goal.id), goal);
       qc.invalidateQueries({ queryKey: queryKeys.goals.all });
+      toast.success('Objectif mis à jour');
+    },
+    onError: (err) => {
+      toast.error(errorMessage(err, "Impossible de mettre à jour l'objectif"));
     },
   });
 }
@@ -57,6 +61,10 @@ export function useCompleteGoal() {
     onSuccess: (goal) => {
       qc.setQueryData(queryKeys.goals.detail(goal.id), goal);
       qc.invalidateQueries({ queryKey: queryKeys.goals.all });
+      toast.success('Objectif marqué comme atteint');
+    },
+    onError: (err) => {
+      toast.error(errorMessage(err, "Impossible de valider l'objectif"));
     },
   });
 }
@@ -67,6 +75,10 @@ export function useDeleteGoal() {
     mutationFn: (id: string) => goalsApi.delete(id),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: queryKeys.goals.all });
+      toast.success('Objectif supprimé');
+    },
+    onError: (err) => {
+      toast.error(errorMessage(err, "Impossible de supprimer l'objectif"));
     },
   });
 }
@@ -96,6 +108,10 @@ export function useDeleteContribution() {
     onSuccess: (_result, { goalId }) => {
       qc.invalidateQueries({ queryKey: queryKeys.goals.detail(goalId) });
       qc.invalidateQueries({ queryKey: queryKeys.goals.all });
+      toast.success('Versement supprimé');
+    },
+    onError: (err) => {
+      toast.error(errorMessage(err, 'Impossible de supprimer le versement'));
     },
   });
 }

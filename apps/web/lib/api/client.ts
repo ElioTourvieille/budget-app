@@ -60,6 +60,7 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
   const response = await fetch(url.toString(), {
     ...init,
     headers,
+    cache: 'no-store',
     ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
   });
 

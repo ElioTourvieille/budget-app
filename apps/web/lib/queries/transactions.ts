@@ -35,8 +35,13 @@ export function useCreateTransaction() {
     onSuccess: () => {
       // Invalide toutes les listes (plusieurs filtres possibles en cache)
       qc.invalidateQueries({ queryKey: queryKeys.transactions.all });
-      // Les budgets summary peuvent changer aussi
+      // Les budgets summary et le solde des comptes peuvent changer aussi
       qc.invalidateQueries({ queryKey: queryKeys.budgets.all });
+      qc.invalidateQueries({ queryKey: queryKeys.accounts.all });
+      toast.success('Transaction ajoutée');
+    },
+    onError: (err) => {
+      toast.error(errorMessage(err, 'Impossible d’ajouter la transaction'));
     },
   });
 }
@@ -65,6 +70,11 @@ export function useDeleteTransaction() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: queryKeys.transactions.all });
       qc.invalidateQueries({ queryKey: queryKeys.budgets.all });
+      qc.invalidateQueries({ queryKey: queryKeys.accounts.all });
+      toast.success('Transaction supprimée');
+    },
+    onError: (err) => {
+      toast.error(errorMessage(err, 'Impossible de supprimer la transaction'));
     },
   });
 }

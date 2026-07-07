@@ -48,7 +48,7 @@ import {
           }),
       };
   
-      const [transactions, total] = await this.prisma.$transaction([
+      const [transactions, total] = await Promise.all([
         this.prisma.transaction.findMany({
           where,
           include: {

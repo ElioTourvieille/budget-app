@@ -83,11 +83,16 @@ export interface Transaction {
   account?: Account;
 }
 
+export interface TransactionsSummary {
+  income: number;
+  expenses: number;
+  remaining: number;
+}
+
 export interface TransactionsResponse {
   transactions: Transaction[];
   total: number;
-  page: number;
-  pageSize: number;
+  summary: TransactionsSummary;
 }
 
 // ─── BUDGETS ──────────────────────────────────────────────────────
