@@ -9,6 +9,8 @@ import { useAccounts, useCategories, useTransactions } from '@/lib/queries';
 import { cn, formatCurrency } from '@/lib/utils';
 import { TransactionsFilters } from './_components/transactions-filters';
 import { TransactionRow } from './_components/transaction-row';
+import { TransfersSection } from './_components/transfers-section';
+import { RecurringSection } from './_components/recurring-section';
 import type { TransactionType } from '@/lib/api/types';
 
 const PAGE_SIZE = 30;
@@ -132,6 +134,9 @@ export default function TransactionsPage() {
           </button>
         </div>
       )}
+
+      <RecurringSection />
+      <TransfersSection />
     </div>
   );
 }

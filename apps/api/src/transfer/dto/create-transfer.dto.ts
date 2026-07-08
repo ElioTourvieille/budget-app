@@ -1,13 +1,17 @@
 import { Type } from 'class-transformer';
 import { IsDate, IsNotEmpty, IsOptional, IsPositive, IsString } from 'class-validator';
 
-export class CreateContributionDto {
-  @IsPositive()
-  amount: number;
+export class CreateTransferDto {
+  @IsString()
+  @IsNotEmpty()
+  fromAccountId: string;
 
   @IsString()
   @IsNotEmpty()
-  accountId: string;
+  toAccountId: string;
+
+  @IsPositive()
+  amount: number;
 
   @IsOptional()
   @Type(() => Date)
@@ -16,6 +20,5 @@ export class CreateContributionDto {
 
   @IsOptional()
   @IsString()
-  @IsNotEmpty()
   note?: string;
 }

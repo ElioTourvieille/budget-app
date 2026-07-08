@@ -25,6 +25,7 @@ export interface ListGoalsParams {
 
 export interface CreateContributionInput {
   amount: number;
+  accountId: string;
   date?: string;
   note?: string;
 }

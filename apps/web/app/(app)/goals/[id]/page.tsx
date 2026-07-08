@@ -7,8 +7,10 @@ import { ArrowLeft, Check, Loader2, Pencil, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
+  useAccounts,
   useAddContribution,
   useCompleteGoal,
   useDeleteContribution,
@@ -26,8 +28,10 @@ export default function GoalDetailPage() {
   const deleteGoal = useDeleteGoal();
   const addContribution = useAddContribution();
   const deleteContribution = useDeleteContribution();
+  const accounts = useAccounts();
 
   const [amount, setAmount] = useState('');
+  const [accountId, setAccountId] = useState('');
 
   if (isLoading || !goal) {
     return (
@@ -69,9 +73,9 @@ export default function GoalDetailPage() {
   async function onAddContribution(e: React.FormEvent) {
     e.preventDefault();
     const value = Number(amount);
-    if (!value || value <= 0) return;
+    if (!value || value <= 0 || !accountId) return;
     try {
-      await addContribution.mutateAsync({ goalId: goal!.id, data: { amount: value } });
+      await addContribution.mutateAsync({ goalId: goal!.id, data: { amount: value, accountId } });
       setAmount('');
     } catch {
       // Le toast d'erreur est déjà affiché par useAddContribution (onError).
@@ -169,19 +173,35 @@ export default function GoalDetailPage() {
           <CardHeader>
             <CardTitle>Nouveau versement</CardTitle>
           </CardHeader>
-          <form onSubmit={onAddContribution} className="flex items-center gap-2">
-            <input
-              type="number"
-              step="0.01"
-              min="0"
-              placeholder="Montant CHF"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              className="flex-1 px-3 py-2.5 rounded-lg bg-input-background border border-border text-sm outline-none focus:ring-2 focus:ring-ring/40 transition-all placeholder:text-muted-foreground"
-            />
-            <Button type="submit" disabled={addContribution.isPending} className="h-10 px-4">
-              {addContribution.isPending ? <Loader2 className="size-4 animate-spin" /> : 'Ajouter'}
-            </Button>
+          <form onSubmit={onAddContribution} className="space-y-2">
+            <Select value={accountId} onValueChange={(value) => setAccountId(value ?? '')}>
+              <SelectTrigger>
+                <SelectValue placeholder="Compte à débiter">
+                  {(value: string) => accounts.data?.accounts.find((a) => a.id === value)?.name}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                {(accounts.data?.accounts ?? []).map((a) => (
+                  <SelectItem key={a.id} value={a.id}>
+                    {a.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <div className="flex items-center gap-2">
+              <input
+                type="number"
+                step="0.01"
+                min="0"
+                placeholder="Montant CHF"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                className="flex-1 px-3 py-2.5 rounded-lg bg-input-background border border-border text-sm outline-none focus:ring-2 focus:ring-ring/40 transition-all placeholder:text-muted-foreground"
+              />
+              <Button type="submit" disabled={addContribution.isPending || !accountId} className="h-10 px-4">
+                {addContribution.isPending ? <Loader2 className="size-4 animate-spin" /> : 'Ajouter'}
+              </Button>
+            </div>
           </form>
         </Card>
       )}

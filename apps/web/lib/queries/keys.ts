@@ -42,4 +42,12 @@ export const queryKeys = {
     all:      ['insights']                                          as const,
     generate: (p: GenerateInsightParams) => ['insights', p]        as const,
   },
+
+  transfers: {
+    all: ['transfers'] as const,
+  },
+
+  recurring: {
+    all: ['recurring'] as const,
+  },
 } as const;

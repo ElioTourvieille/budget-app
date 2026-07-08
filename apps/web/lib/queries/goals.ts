@@ -92,6 +92,8 @@ export function useAddContribution() {
       // Refresh the goal detail to get updated currentAmount + progress
       qc.invalidateQueries({ queryKey: queryKeys.goals.detail(goalId) });
       qc.invalidateQueries({ queryKey: queryKeys.goals.all });
+      // Le versement débite le compte source
+      qc.invalidateQueries({ queryKey: queryKeys.accounts.all });
       toast.success('Versement ajouté');
     },
     onError: (err) => {
@@ -108,6 +110,8 @@ export function useDeleteContribution() {
     onSuccess: (_result, { goalId }) => {
       qc.invalidateQueries({ queryKey: queryKeys.goals.detail(goalId) });
       qc.invalidateQueries({ queryKey: queryKeys.goals.all });
+      // Le versement supprimé recrédite le compte source
+      qc.invalidateQueries({ queryKey: queryKeys.accounts.all });
       toast.success('Versement supprimé');
     },
     onError: (err) => {

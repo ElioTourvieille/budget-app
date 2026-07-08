@@ -1,5 +1,6 @@
 'use client';
 
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import type { Account, Category, TransactionType } from '@/lib/api/types';
 
 const TYPE_LABELS: Record<TransactionType, string> = {
@@ -8,8 +9,7 @@ const TYPE_LABELS: Record<TransactionType, string> = {
   TRANSFER: 'Virement',
 };
 
-const selectClass =
-  'px-3 py-2 rounded-lg bg-input-background border border-border text-sm outline-none focus:ring-2 focus:ring-ring/40 transition-all';
+const triggerClass = 'w-auto min-w-40';
 
 export function TransactionsFilters({
   type,
@@ -32,36 +32,51 @@ export function TransactionsFilters({
 }) {
   return (
     <div className="flex flex-wrap gap-2">
-      <select
-        value={type}
-        onChange={(e) => onTypeChange(e.target.value as TransactionType | '')}
-        className={selectClass}
-      >
-        <option value="">Tous les types</option>
-        {(Object.keys(TYPE_LABELS) as TransactionType[]).map((t) => (
-          <option key={t} value={t}>
-            {TYPE_LABELS[t]}
-          </option>
-        ))}
-      </select>
+      <Select value={type} onValueChange={(value) => onTypeChange(value ?? '')}>
+        <SelectTrigger className={triggerClass}>
+          <SelectValue>{(value: TransactionType | '') => (value ? TYPE_LABELS[value] : 'Tous les types')}</SelectValue>
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="">Tous les types</SelectItem>
+          {(Object.keys(TYPE_LABELS) as TransactionType[]).map((t) => (
+            <SelectItem key={t} value={t}>
+              {TYPE_LABELS[t]}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
 
-      <select value={accountId} onChange={(e) => onAccountChange(e.target.value)} className={selectClass}>
-        <option value="">Tous les comptes</option>
-        {accounts.map((a) => (
-          <option key={a.id} value={a.id}>
-            {a.name}
-          </option>
-        ))}
-      </select>
+      <Select value={accountId} onValueChange={(value) => onAccountChange(value ?? '')}>
+        <SelectTrigger className={triggerClass}>
+          <SelectValue>
+            {(value: string) => (value ? accounts.find((a) => a.id === value)?.name : 'Tous les comptes')}
+          </SelectValue>
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="">Tous les comptes</SelectItem>
+          {accounts.map((a) => (
+            <SelectItem key={a.id} value={a.id}>
+              {a.name}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
 
-      <select value={categoryId} onChange={(e) => onCategoryChange(e.target.value)} className={selectClass}>
-        <option value="">Toutes les catégories</option>
-        {categories.map((c) => (
-          <option key={c.id} value={c.id}>
-            {c.name}
-          </option>
-        ))}
-      </select>
+      <Select value={categoryId} onValueChange={(value) => onCategoryChange(value ?? '')}>
+        <SelectTrigger className={triggerClass}>
+          <SelectValue>
+            {(value: string) => (value ? categories.find((c) => c.id === value)?.name : 'Toutes les catégories')}
+          </SelectValue>
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="">Toutes les catégories</SelectItem>
+          {categories.map((c) => (
+            <SelectItem key={c.id} value={c.id}>
+              {c.name}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
     </div>
   );
 }

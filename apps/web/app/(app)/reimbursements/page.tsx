@@ -1,12 +1,12 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { ArrowRight } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useTransactions, useUpdateTransaction } from '@/lib/queries';
 import { cn, formatCurrency, formatShortDate } from '@/lib/utils';
-import type { ReimbursementStatus, Transaction } from '@/lib/api/types';
+import type { Transaction } from '@/lib/api/types';
 
 const INSURANCE_LABELS: Record<string, string> = {
   LAMAL: 'LAMal',
@@ -14,63 +14,31 @@ const INSURANCE_LABELS: Record<string, string> = {
   OTHER: 'Autre',
 };
 
-const STATUS_LABELS: Record<ReimbursementStatus, string> = {
-  PENDING: 'En attente',
-  PARTIAL: 'Partiel',
-  COMPLETED: 'Remboursé',
-};
-
-const STATUS_TINT: Record<ReimbursementStatus, string> = {
-  PENDING: 'bg-accent text-accent-foreground',
-  PARTIAL: 'bg-secondary text-secondary-foreground',
-  COMPLETED: 'bg-success/10 text-success',
-};
-
-const NEXT_STATUS: Record<ReimbursementStatus, ReimbursementStatus | null> = {
-  PENDING: 'PARTIAL',
-  PARTIAL: 'COMPLETED',
-  COMPLETED: null,
-};
-
-const NEXT_STATUS_LABEL: Record<ReimbursementStatus, string> = {
-  PENDING: 'Marquer partiel',
-  PARTIAL: 'Marquer remboursé',
-  COMPLETED: '',
-};
-
-const TABS: { key: 'ALL' | ReimbursementStatus; label: string }[] = [
+const TABS: { key: 'ALL' | 'PENDING' | 'COMPLETED'; label: string }[] = [
   { key: 'ALL', label: 'Tous' },
   { key: 'PENDING', label: 'En attente' },
-  { key: 'PARTIAL', label: 'Partiel' },
   { key: 'COMPLETED', label: 'Remboursé' },
 ];
 
 export default function ReimbursementsPage() {
-  const [tab, setTab] = useState<'ALL' | ReimbursementStatus>('ALL');
+  const [tab, setTab] = useState<'ALL' | 'PENDING' | 'COMPLETED'>('ALL');
 
   const pending = useTransactions({ reimbursementStatus: 'PENDING', limit: 100 });
-  const partial = useTransactions({ reimbursementStatus: 'PARTIAL', limit: 100 });
   const completed = useTransactions({ reimbursementStatus: 'COMPLETED', limit: 100 });
 
-  const isLoading = pending.isLoading || partial.isLoading || completed.isLoading;
+  const isLoading = pending.isLoading || completed.isLoading;
 
   const all = useMemo(() => {
-    const items = [
-      ...(pending.data?.transactions ?? []),
-      ...(partial.data?.transactions ?? []),
-      ...(completed.data?.transactions ?? []),
-    ];
+    const items = [...(pending.data?.transactions ?? []), ...(completed.data?.transactions ?? [])];
     return items.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  }, [pending.data, partial.data, completed.data]);
+  }, [pending.data, completed.data]);
 
   const totalPending = useMemo(() => {
-    return [...(pending.data?.transactions ?? []), ...(partial.data?.transactions ?? [])].reduce(
-      (sum, t) => sum + (Number(t.amount) - Number(t.reimbursedAmount ?? 0)),
-      0,
-    );
-  }, [pending.data, partial.data]);
+    return (pending.data?.transactions ?? []).reduce((sum, t) => sum + Number(t.amount), 0);
+  }, [pending.data]);
 
-  const visible = tab === 'ALL' ? all : tab === 'PENDING' ? (pending.data?.transactions ?? []) : tab === 'PARTIAL' ? (partial.data?.transactions ?? []) : (completed.data?.transactions ?? []);
+  const visible =
+    tab === 'ALL' ? all : tab === 'PENDING' ? (pending.data?.transactions ?? []) : (completed.data?.transactions ?? []);
 
   return (
     <div className="p-4 sm:p-6 max-w-3xl mx-auto space-y-6">
@@ -110,7 +78,7 @@ export default function ReimbursementsPage() {
       {isLoading ? (
         <div className="space-y-3">
           {[0, 1, 2].map((i) => (
-            <Skeleton key={i} className="h-20 w-full rounded-2xl" />
+            <Skeleton key={i} className="h-24 w-full rounded-2xl" />
           ))}
         </div>
       ) : visible.length === 0 ? (
@@ -130,46 +98,91 @@ export default function ReimbursementsPage() {
 
 function ReimbursementRow({ transaction }: { transaction: Transaction }) {
   const updateTransaction = useUpdateTransaction();
-  const status = transaction.reimbursementStatus ?? 'PENDING';
-  const next = NEXT_STATUS[status];
+  const isCompleted = (transaction.reimbursementStatus ?? 'PENDING') !== 'PENDING';
+  const [editing, setEditing] = useState(false);
+  const [amount, setAmount] = useState(
+    transaction.reimbursedAmount ? String(transaction.reimbursedAmount) : '',
+  );
+
+  const reimbursed = Number(transaction.reimbursedAmount ?? 0);
+  const shortfall = Math.max(0, Number(transaction.amount) - reimbursed);
+
+  function onSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    const value = Number(amount);
+    if (Number.isNaN(value) || value < 0) return;
+    updateTransaction.mutate(
+      { id: transaction.id, data: { reimbursedAmount: value } },
+      { onSuccess: () => setEditing(false) },
+    );
+  }
 
   return (
-    <Card className="flex-row items-center justify-between">
-      <div className="min-w-0 flex-1">
-        <p className="text-sm font-medium truncate">
-          {transaction.description || transaction.merchant || 'Transaction'}
-        </p>
-        <p className="text-xs text-muted-foreground truncate">
-          {formatShortDate(transaction.date)}
-          {transaction.insuranceType ? ` · ${INSURANCE_LABELS[transaction.insuranceType]}` : ''}
-          {transaction.category ? ` · ${transaction.category.name}` : ''}
-        </p>
+    <Card className="gap-3">
+      <div className="flex items-center justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-medium truncate">
+            {transaction.description || transaction.merchant || 'Transaction'}
+          </p>
+          <p className="text-xs text-muted-foreground truncate">
+            {formatShortDate(transaction.date)}
+            {transaction.insuranceType ? ` · ${INSURANCE_LABELS[transaction.insuranceType]}` : ''}
+            {transaction.category ? ` · ${transaction.category.name}` : ''}
+          </p>
+        </div>
+        <div className="flex items-center gap-3 shrink-0">
+          <span className="text-sm font-semibold tabular-nums">{formatCurrency(transaction.amount)}</span>
+          <span
+            className={cn(
+              'px-2.5 py-1 rounded-full text-xs font-semibold',
+              isCompleted ? 'bg-success/10 text-success' : 'bg-accent text-accent-foreground',
+            )}
+          >
+            {isCompleted ? 'Remboursé' : 'En attente'}
+          </span>
+        </div>
       </div>
 
-      <div className="flex items-center gap-3 shrink-0">
-        <span className="text-sm font-semibold tabular-nums">
-          {formatCurrency(transaction.amount)}
-        </span>
-        <span className={cn('px-2.5 py-1 rounded-full text-xs font-semibold', STATUS_TINT[status])}>
-          {STATUS_LABELS[status]}
-        </span>
-        {next && (
+      {isCompleted && !editing ? (
+        <div className="flex items-center justify-between gap-3 text-xs text-muted-foreground">
+          <span>
+            Reçu {formatCurrency(reimbursed)}
+            {shortfall > 0 ? ` · reste à charge ${formatCurrency(shortfall)}` : ' · remboursé intégralement'}
+          </span>
           <button
             type="button"
-            onClick={() =>
-              updateTransaction.mutate({
-                id: transaction.id,
-                data: { reimbursementStatus: next },
-              })
-            }
-            disabled={updateTransaction.isPending}
-            className="flex items-center gap-1 text-xs font-medium text-secondary-foreground hover:underline underline-offset-2 disabled:opacity-40 whitespace-nowrap"
+            onClick={() => setEditing(true)}
+            className="font-medium hover:underline underline-offset-2 shrink-0"
           >
-            {NEXT_STATUS_LABEL[status]}
-            <ArrowRight className="size-3" />
+            Modifier
           </button>
-        )}
-      </div>
+        </div>
+      ) : (
+        <form onSubmit={onSubmit} className="flex items-center gap-2">
+          <input
+            type="number"
+            step="0.01"
+            min="0"
+            autoFocus={editing}
+            placeholder="Montant reçu (CHF)"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            className="flex-1 px-3 py-2 rounded-lg bg-input-background border border-border text-sm outline-none focus:ring-2 focus:ring-ring/40 transition-all placeholder:text-muted-foreground"
+          />
+          <Button type="submit" size="sm" disabled={updateTransaction.isPending} className="h-9 px-3">
+            Enregistrer
+          </Button>
+          {isCompleted && (
+            <button
+              type="button"
+              onClick={() => setEditing(false)}
+              className="text-xs text-muted-foreground hover:text-foreground transition-colors shrink-0"
+            >
+              Annuler
+            </button>
+          )}
+        </form>
+      )}
     </Card>
   );
 }

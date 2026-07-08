@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useCreateAccount } from '@/lib/queries';
 import { ACCOUNT_TYPE_LABELS } from '@/lib/account-visuals';
 import type { AccountType } from '@/lib/api/types';
@@ -65,18 +66,18 @@ export default function NewAccountPage() {
           <label className="block text-sm font-medium mb-1.5" htmlFor="type">
             Type de compte
           </label>
-          <select
-            id="type"
-            value={type}
-            onChange={(e) => setType(e.target.value as AccountType)}
-            className="w-full px-3 py-2.5 rounded-lg bg-input-background border border-border text-sm outline-none focus:ring-2 focus:ring-ring/40 transition-all"
-          >
-            {ACCOUNT_TYPES.map((t) => (
-              <option key={t} value={t}>
-                {ACCOUNT_TYPE_LABELS[t]}
-              </option>
-            ))}
-          </select>
+          <Select value={type} onValueChange={(value) => value && setType(value)}>
+            <SelectTrigger id="type">
+              <SelectValue>{(value: AccountType) => ACCOUNT_TYPE_LABELS[value]}</SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              {ACCOUNT_TYPES.map((t) => (
+                <SelectItem key={t} value={t}>
+                  {ACCOUNT_TYPE_LABELS[t]}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         <div>

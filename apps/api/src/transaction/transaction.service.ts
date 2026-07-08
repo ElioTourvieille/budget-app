@@ -145,24 +145,43 @@ import {
       dto: UpdateTransactionDto;
     }) {
       const existing = await this.assertOwnership({ transactionId, userId });
-  
-      // Si on marque comme remboursé complètement
-      const reimbursementStatus =
-        dto.reimbursedAmount &&
-        dto.reimbursedAmount >= Number(existing.amount)
-          ? 'COMPLETED'
-          : dto.reimbursementStatus;
-  
-      return this.prisma.transaction.update({
+
+      // Un montant reçu (même partiel) clôt le remboursement : la franchise/
+      // quote-part rend un remboursement à 100% rare, inutile d'attendre "plus".
+      let reimbursementStatus = dto.reimbursementStatus;
+      let balanceDelta = 0;
+
+      if (dto.reimbursedAmount !== undefined) {
+        const oldReimbursed = Number(existing.reimbursedAmount ?? 0);
+        balanceDelta = dto.reimbursedAmount - oldReimbursed;
+        reimbursementStatus = dto.reimbursedAmount > 0 ? 'COMPLETED' : 'PENDING';
+      }
+
+      const updated = await this.prisma.transaction.update({
         where: { id: transactionId },
         data: {
           ...dto,
           date: dto.date ? new Date(dto.date) : undefined,
-          reimbursedAt: dto.reimbursedAt ? new Date(dto.reimbursedAt) : undefined,
+          reimbursedAt:
+            dto.reimbursedAmount !== undefined
+              ? new Date()
+              : dto.reimbursedAt
+                ? new Date(dto.reimbursedAt)
+                : undefined,
           reimbursementStatus,
         },
         include: { category: true, account: true },
       });
+
+      // Le montant reçu recrédite le compte sur lequel la dépense avait été prélevée
+      if (balanceDelta !== 0) {
+        await this.prisma.account.update({
+          where: { id: existing.accountId },
+          data: { balance: { increment: balanceDelta } },
+        });
+      }
+
+      return updated;
     }
   
     // ─── DELETE ───────────────────────────────────────────────────────
@@ -175,9 +194,9 @@ import {
       userId: string;
     }) {
       const transaction = await this.assertOwnership({ transactionId, userId });
-  
+
       await this.prisma.transaction.delete({ where: { id: transactionId } });
-  
+
       // Annule l'effet sur le solde du compte
       await this.updateAccountBalance({
         accountId: transaction.accountId,
@@ -185,7 +204,16 @@ import {
         type: transaction.type,
         reverse: true,
       });
-  
+
+      // Annule aussi le crédit d'un éventuel remboursement déjà reçu
+      const reimbursed = Number(transaction.reimbursedAmount ?? 0);
+      if (reimbursed > 0) {
+        await this.prisma.account.update({
+          where: { id: transaction.accountId },
+          data: { balance: { decrement: reimbursed } },
+        });
+      }
+
       return { message: 'Transaction supprimée.' };
     }
   

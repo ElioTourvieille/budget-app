@@ -113,6 +113,7 @@ export class GoalService {
     dto: CreateContributionDto;
   }) {
     const goal = await this.assertOwnership({ goalId, userId });
+    await this.assertAccountOwnership({ accountId: dto.accountId, userId });
 
     const newAmount = Number(goal.currentAmount) + dto.amount;
     const isCompleted = newAmount >= Number(goal.targetAmount);
@@ -121,6 +122,7 @@ export class GoalService {
       this.prisma.goalContribution.create({
         data: {
           goalId,
+          accountId: dto.accountId,
           amount: dto.amount,
           date: dto.date ?? new Date(),
           note: dto.note,
@@ -132,6 +134,11 @@ export class GoalService {
           currentAmount: newAmount,
           ...(isCompleted && { isCompleted: true }),
         },
+      }),
+      // Le versement est prélevé sur le compte source, comme une dépense
+      this.prisma.account.update({
+        where: { id: dto.accountId },
+        data: { balance: { decrement: dto.amount } },
       }),
     ]);
 
@@ -165,6 +172,15 @@ export class GoalService {
         where: { id: goalId },
         data: { currentAmount: newAmount },
       }),
+      // Recrédite le compte source si le versement en avait un (historique = aucun)
+      ...(contribution.accountId
+        ? [
+            this.prisma.account.update({
+              where: { id: contribution.accountId },
+              data: { balance: { increment: Number(contribution.amount) } },
+            }),
+          ]
+        : []),
     ]);
 
     return { message: 'Contribution supprimée.' };
@@ -179,6 +195,21 @@ export class GoalService {
     if (goal.userId !== userId) throw new ForbiddenException();
 
     return goal;
+  }
+
+  private async assertAccountOwnership({
+    accountId,
+    userId,
+  }: {
+    accountId: string;
+    userId: string;
+  }) {
+    const account = await this.prisma.account.findUnique({ where: { id: accountId } });
+
+    if (!account) throw new NotFoundException('Compte introuvable.');
+    if (account.userId !== userId) throw new ForbiddenException();
+
+    return account;
   }
 
   private computeProgress(goal: Pick<Goal, 'targetAmount' | 'currentAmount' | 'monthlyTarget' | 'targetDate'>) {

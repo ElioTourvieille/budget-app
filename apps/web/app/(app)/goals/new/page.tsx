@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useCreateGoal } from '@/lib/queries';
 import { GOAL_TYPE_LABELS, SELECTABLE_GOAL_TYPES } from '@/lib/goal-visuals';
 import type { GoalType } from '@/lib/api/types';
@@ -73,18 +74,18 @@ export default function NewGoalPage() {
           <label className="block text-sm font-medium mb-1.5" htmlFor="type">
             Type
           </label>
-          <select
-            id="type"
-            value={type}
-            onChange={(e) => setType(e.target.value as GoalType)}
-            className="w-full px-3 py-2.5 rounded-lg bg-input-background border border-border text-sm outline-none focus:ring-2 focus:ring-ring/40 transition-all"
-          >
-            {SELECTABLE_GOAL_TYPES.map((t) => (
-              <option key={t} value={t}>
-                {GOAL_TYPE_LABELS[t]}
-              </option>
-            ))}
-          </select>
+          <Select value={type} onValueChange={(value) => value && setType(value)}>
+            <SelectTrigger id="type">
+              <SelectValue>{(value: GoalType) => GOAL_TYPE_LABELS[value]}</SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              {SELECTABLE_GOAL_TYPES.map((t) => (
+                <SelectItem key={t} value={t}>
+                  {GOAL_TYPE_LABELS[t]}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         <div>

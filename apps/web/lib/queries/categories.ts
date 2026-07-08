@@ -1,7 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import { categoriesApi } from '@/lib/api/categories';
 import type { CreateCategoryInput, ListCategoriesParams, UpdateCategoryInput } from '@/lib/api/categories';
+import { ApiError } from '@/lib/api/client';
 import { queryKeys } from './keys';
+
+function errorMessage(err: unknown, fallback: string) {
+  return err instanceof ApiError ? err.message : fallback;
+}
 
 export function useCategories(params?: ListCategoriesParams) {
   return useQuery({
@@ -24,6 +30,10 @@ export function useCreateCategory() {
     mutationFn: (data: CreateCategoryInput) => categoriesApi.create(data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: queryKeys.categories.all });
+      toast.success('Catégorie créée');
+    },
+    onError: (err) => {
+      toast.error(errorMessage(err, 'Impossible de créer la catégorie'));
     },
   });
 }
@@ -36,6 +46,10 @@ export function useUpdateCategory() {
     onSuccess: (category) => {
       qc.setQueryData(queryKeys.categories.detail(category.id), category);
       qc.invalidateQueries({ queryKey: queryKeys.categories.all });
+      toast.success('Catégorie mise à jour');
+    },
+    onError: (err) => {
+      toast.error(errorMessage(err, 'Impossible de mettre à jour la catégorie'));
     },
   });
 }
@@ -46,6 +60,10 @@ export function useDeleteCategory() {
     mutationFn: (id: string) => categoriesApi.delete(id),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: queryKeys.categories.all });
+      toast.success('Catégorie supprimée');
+    },
+    onError: (err) => {
+      toast.error(errorMessage(err, 'Impossible de supprimer la catégorie'));
     },
   });
 }

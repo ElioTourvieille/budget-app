@@ -55,6 +55,8 @@ export function useUpdateTransaction() {
       qc.setQueryData(queryKeys.transactions.detail(transaction.id), transaction);
       qc.invalidateQueries({ queryKey: queryKeys.transactions.all });
       qc.invalidateQueries({ queryKey: queryKeys.budgets.all });
+      // Un remboursement saisi recrédite le compte associé
+      qc.invalidateQueries({ queryKey: queryKeys.accounts.all });
       toast.success('Transaction mise à jour');
     },
     onError: (err) => {

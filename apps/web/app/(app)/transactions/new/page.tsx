@@ -5,20 +5,31 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useAccounts, useCategories, useCreateTransaction } from '@/lib/queries';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useAccounts, useCategories, useCreateRecurring, useCreateTransaction } from '@/lib/queries';
 import { cn } from '@/lib/utils';
-import type { InsuranceType, TransactionType } from '@/lib/api/types';
+import type { Frequency, InsuranceType, TransactionType } from '@/lib/api/types';
 
-const TYPE_LABELS: Record<TransactionType, string> = {
+type CreatableType = Exclude<TransactionType, 'TRANSFER'>;
+
+const TYPE_LABELS: Record<CreatableType, string> = {
   EXPENSE: 'Dépense',
   INCOME: 'Entrée',
-  TRANSFER: 'Virement',
 };
 
 const INSURANCE_LABELS: Record<InsuranceType, string> = {
   LAMAL: 'LAMal',
   LCA: 'LCA',
   OTHER: 'Autre',
+};
+
+const FREQUENCY_LABELS: Record<Frequency, string> = {
+  DAILY: 'Chaque jour',
+  WEEKLY: 'Chaque semaine',
+  BIWEEKLY: 'Toutes les 2 semaines',
+  MONTHLY: 'Chaque mois',
+  QUARTERLY: 'Chaque trimestre',
+  YEARLY: 'Chaque année',
 };
 
 function todayIso() {
@@ -28,10 +39,11 @@ function todayIso() {
 export default function NewTransactionPage() {
   const router = useRouter();
   const createTransaction = useCreateTransaction();
+  const createRecurring = useCreateRecurring();
   const accounts = useAccounts();
   const categories = useCategories();
 
-  const [type, setType] = useState<TransactionType>('EXPENSE');
+  const [type, setType] = useState<CreatableType>('EXPENSE');
   const [amount, setAmount] = useState('');
   const [accountId, setAccountId] = useState('');
   const [categoryId, setCategoryId] = useState('');
@@ -40,27 +52,43 @@ export default function NewTransactionPage() {
   const [description, setDescription] = useState('');
   const [isReimbursable, setIsReimbursable] = useState(false);
   const [insuranceType, setInsuranceType] = useState<InsuranceType>('LAMAL');
+  const [isRecurringTemplate, setIsRecurringTemplate] = useState(false);
+  const [frequency, setFrequency] = useState<Frequency>('MONTHLY');
 
   const accountOptions = accounts.data?.accounts ?? [];
+  const isPending = createTransaction.isPending || createRecurring.isPending;
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!accountId) return;
     try {
-      await createTransaction.mutateAsync({
-        amount: Number(amount),
-        type,
-        accountId,
-        date,
-        categoryId: categoryId || undefined,
-        merchant: merchant || undefined,
-        description: description || undefined,
-        isReimbursable: type === 'EXPENSE' ? isReimbursable : undefined,
-        insuranceType: type === 'EXPENSE' && isReimbursable ? insuranceType : undefined,
-      });
+      if (isRecurringTemplate) {
+        await createRecurring.mutateAsync({
+          name: description || merchant || TYPE_LABELS[type],
+          accountId,
+          type,
+          categoryId: categoryId || undefined,
+          merchant: merchant || undefined,
+          amount: Number(amount),
+          frequency,
+          nextDate: date,
+        });
+      } else {
+        await createTransaction.mutateAsync({
+          amount: Number(amount),
+          type,
+          accountId,
+          date,
+          categoryId: categoryId || undefined,
+          merchant: merchant || undefined,
+          description: description || undefined,
+          isReimbursable: type === 'EXPENSE' ? isReimbursable : undefined,
+          insuranceType: type === 'EXPENSE' && isReimbursable ? insuranceType : undefined,
+        });
+      }
       router.replace('/transactions');
     } catch {
-      // Le toast d'erreur est déjà affiché par useCreateTransaction (onError).
+      // Le toast d'erreur est déjà affiché par les hooks (onError).
     }
   }
 
@@ -80,8 +108,8 @@ export default function NewTransactionPage() {
       </p>
 
       <form onSubmit={onSubmit} className="space-y-4">
-        <div className="grid grid-cols-3 gap-2">
-          {(Object.keys(TYPE_LABELS) as TransactionType[]).map((t) => (
+        <div className="grid grid-cols-2 gap-2">
+          {(Object.keys(TYPE_LABELS) as CreatableType[]).map((t) => (
             <button
               key={t}
               type="button"
@@ -97,6 +125,12 @@ export default function NewTransactionPage() {
             </button>
           ))}
         </div>
+        <p className="text-xs text-muted-foreground -mt-2">
+          Besoin de déplacer de l&apos;argent entre deux comptes ?{' '}
+          <Link href="/transfers/new" className="font-medium text-foreground hover:underline">
+            Faire un virement
+          </Link>
+        </p>
 
         <div>
           <label className="block text-sm font-medium mb-1.5" htmlFor="amount">
@@ -119,46 +153,54 @@ export default function NewTransactionPage() {
           <label className="block text-sm font-medium mb-1.5" htmlFor="accountId">
             Compte
           </label>
-          <select
-            id="accountId"
-            required
-            value={accountId}
-            onChange={(e) => setAccountId(e.target.value)}
-            className="w-full px-3 py-2.5 rounded-lg bg-input-background border border-border text-sm outline-none focus:ring-2 focus:ring-ring/40 transition-all"
+          <Select
+            value={accountId || null}
+            onValueChange={(value) => setAccountId(value ?? '')}
           >
-            <option value="" disabled>
-              Sélectionner un compte
-            </option>
-            {accountOptions.map((a) => (
-              <option key={a.id} value={a.id}>
-                {a.name}
-              </option>
-            ))}
-          </select>
+            <SelectTrigger id="accountId">
+              <SelectValue placeholder="Sélectionner un compte">
+                {(value: string) => accountOptions.find((a) => a.id === value)?.name}
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              {accountOptions.map((a) => (
+                <SelectItem key={a.id} value={a.id}>
+                  {a.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-1.5" htmlFor="categoryId">
-            Catégorie <span className="text-muted-foreground font-normal">(optionnel)</span>
-          </label>
-          <select
-            id="categoryId"
-            value={categoryId}
-            onChange={(e) => setCategoryId(e.target.value)}
-            className="w-full px-3 py-2.5 rounded-lg bg-input-background border border-border text-sm outline-none focus:ring-2 focus:ring-ring/40 transition-all"
-          >
-            <option value="">Sans catégorie</option>
-            {(categories.data ?? []).map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
-          </select>
+          <div className="flex items-center justify-between mb-1.5">
+            <label className="block text-sm font-medium" htmlFor="categoryId">
+              Catégorie <span className="text-muted-foreground font-normal">(optionnel)</span>
+            </label>
+            <Link href="/categories" className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors">
+              Gérer les catégories
+            </Link>
+          </div>
+          <Select value={categoryId} onValueChange={(value) => setCategoryId(value ?? '')}>
+            <SelectTrigger id="categoryId">
+              <SelectValue>
+                {(value: string) => (value ? categories.data?.find((c) => c.id === value)?.name : 'Sans catégorie')}
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">Sans catégorie</SelectItem>
+              {(categories.data ?? []).map((c) => (
+                <SelectItem key={c.id} value={c.id}>
+                  {c.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         <div>
           <label className="block text-sm font-medium mb-1.5" htmlFor="date">
-            Date
+            {isRecurringTemplate ? 'Première échéance' : 'Date'}
           </label>
           <input
             id="date"
@@ -186,18 +228,58 @@ export default function NewTransactionPage() {
 
         <div>
           <label className="block text-sm font-medium mb-1.5" htmlFor="description">
-            Description <span className="text-muted-foreground font-normal">(optionnel)</span>
+            {isRecurringTemplate ? (
+              'Nom de la récurrence'
+            ) : (
+              <>
+                Description <span className="text-muted-foreground font-normal">(optionnel)</span>
+              </>
+            )}
           </label>
           <input
             id="description"
             type="text"
+            required={isRecurringTemplate}
+            placeholder={isRecurringTemplate ? 'Salaire, Loyer, Abonnement…' : undefined}
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            className="w-full px-3 py-2.5 rounded-lg bg-input-background border border-border text-sm outline-none focus:ring-2 focus:ring-ring/40 transition-all"
+            className="w-full px-3 py-2.5 rounded-lg bg-input-background border border-border text-sm outline-none focus:ring-2 focus:ring-ring/40 transition-all placeholder:text-muted-foreground"
           />
         </div>
 
-        {type === 'EXPENSE' && (
+        <div className="rounded-xl border border-border p-3 space-y-3">
+          <label className="flex items-center gap-2 text-sm font-medium">
+            <input
+              type="checkbox"
+              checked={isRecurringTemplate}
+              onChange={(e) => setIsRecurringTemplate(e.target.checked)}
+              className="size-4 rounded border-border"
+            />
+            Rendre récurrent
+          </label>
+          {isRecurringTemplate && (
+            <>
+              <p className="text-xs text-muted-foreground -mt-1">
+                Génère automatiquement cette transaction à chaque échéance (salaire, loyer,
+                abonnement…), avec possibilité de modifier le montant plus tard.
+              </p>
+              <Select value={frequency} onValueChange={(value) => value && setFrequency(value)}>
+                <SelectTrigger>
+                  <SelectValue>{(value: Frequency) => FREQUENCY_LABELS[value]}</SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {(Object.keys(FREQUENCY_LABELS) as Frequency[]).map((f) => (
+                    <SelectItem key={f} value={f}>
+                      {FREQUENCY_LABELS[f]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </>
+          )}
+        </div>
+
+        {type === 'EXPENSE' && !isRecurringTemplate && (
           <div className="rounded-xl border border-border p-3 space-y-3">
             <label className="flex items-center gap-2 text-sm font-medium">
               <input
@@ -209,17 +291,18 @@ export default function NewTransactionPage() {
               Remboursable par une assurance
             </label>
             {isReimbursable && (
-              <select
-                value={insuranceType}
-                onChange={(e) => setInsuranceType(e.target.value as InsuranceType)}
-                className="w-full px-3 py-2.5 rounded-lg bg-input-background border border-border text-sm outline-none focus:ring-2 focus:ring-ring/40 transition-all"
-              >
-                {(Object.keys(INSURANCE_LABELS) as InsuranceType[]).map((i) => (
-                  <option key={i} value={i}>
-                    {INSURANCE_LABELS[i]}
-                  </option>
-                ))}
-              </select>
+              <Select value={insuranceType} onValueChange={(value) => value && setInsuranceType(value)}>
+                <SelectTrigger>
+                  <SelectValue>{(value: InsuranceType) => INSURANCE_LABELS[value]}</SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {(Object.keys(INSURANCE_LABELS) as InsuranceType[]).map((i) => (
+                    <SelectItem key={i} value={i}>
+                      {INSURANCE_LABELS[i]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             )}
           </div>
         )}
@@ -227,10 +310,12 @@ export default function NewTransactionPage() {
         <Button
           type="submit"
           className="w-full h-11 text-base rounded-xl mt-2"
-          disabled={createTransaction.isPending || !accountId}
+          disabled={isPending || !accountId}
         >
-          {createTransaction.isPending ? (
+          {isPending ? (
             <Loader2 className="size-4 animate-spin" />
+          ) : isRecurringTemplate ? (
+            'Créer la récurrence'
           ) : (
             'Ajouter la transaction'
           )}

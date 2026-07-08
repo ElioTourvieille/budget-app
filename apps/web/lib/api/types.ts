@@ -128,6 +128,7 @@ export type GoalType = 'VACATION' | 'EMERGENCY' | 'THIRD_PILLAR' | 'PURCHASE' | 
 export interface GoalContribution {
   id: string;
   goalId: string;
+  accountId?: string;
   amount: Decimal;
   date: string;
   note?: string;
@@ -153,6 +154,49 @@ export interface Goal {
   monthsToTarget?: number | null;
   estimatedCompletionDate?: string;
   isOnTrack?: boolean;
+}
+
+// ─── TRANSFERTS ───────────────────────────────────────────────────
+
+export interface TransferAccountRef {
+  id: string;
+  name: string;
+  color?: string;
+  icon?: string;
+}
+
+export interface Transfer {
+  id: string;
+  fromAccount: string;
+  toAccount: string;
+  amount: Decimal;
+  date: string;
+  note?: string;
+  createdAt: string;
+  from: TransferAccountRef;
+  to: TransferAccountRef;
+}
+
+// ─── TRANSACTIONS RÉCURRENTES ─────────────────────────────────────
+
+export type Frequency = 'DAILY' | 'WEEKLY' | 'BIWEEKLY' | 'MONTHLY' | 'QUARTERLY' | 'YEARLY';
+
+export interface RecurringTransaction {
+  id: string;
+  userId: string;
+  accountId: string;
+  categoryId?: string;
+  type: Exclude<TransactionType, 'TRANSFER'>;
+  name: string;
+  merchant?: string;
+  amount: Decimal;
+  frequency: Frequency;
+  nextDate: string;
+  endDate?: string;
+  isActive: boolean;
+  createdAt: string;
+  account?: Account;
+  category?: Category;
 }
 
 // ─── INSIGHTS ─────────────────────────────────────────────────────
