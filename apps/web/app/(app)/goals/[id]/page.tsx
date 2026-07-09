@@ -174,7 +174,7 @@ export default function GoalDetailPage() {
             <CardTitle>Nouveau versement</CardTitle>
           </CardHeader>
           <form onSubmit={onAddContribution} className="space-y-2">
-            <Select value={accountId} onValueChange={(value) => setAccountId(value ?? '')}>
+            <Select value={accountId || null} onValueChange={(value) => setAccountId(value ?? '')}>
               <SelectTrigger>
                 <SelectValue placeholder="Compte à débiter">
                   {(value: string) => accounts.data?.accounts.find((a) => a.id === value)?.name}
