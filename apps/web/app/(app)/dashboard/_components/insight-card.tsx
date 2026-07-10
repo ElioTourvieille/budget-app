@@ -1,16 +1,28 @@
 'use client';
 
-import { Sparkles, RotateCw } from 'lucide-react';
+import Link from 'next/link';
+import { Sparkles, RotateCw, ArrowRight } from 'lucide-react';
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useInsight } from '@/lib/queries';
-import { InsightMarkdown } from '@/components/insight-markdown';
+
+// Extrait la première phrase descriptive du markdown (saute titres/tableaux)
+// pour un aperçu compact sur le dashboard — l'analyse complète reste sur /recommendations.
+function extractPreview(content: string): string {
+  const line = content
+    .split('\n')
+    .map((l) => l.trim())
+    .find((l) => l && !l.startsWith('#') && !l.startsWith('|') && !l.startsWith('---'));
+
+  return (line ?? '').replace(/\*\*(.*?)\*\*/g, '$1');
+}
 
 export function InsightCard() {
   // staleTime (6h) matches le cache serveur — pas de re-fetch tant que les
   // données sont fraîches. `refetch` ci-dessous revalide sans forcer une
   // régénération côté Claude (pas de `force: true`).
   const { data, isLoading, isFetching, isError, refetch } = useInsight({ type: 'summary' });
+  const preview = data ? extractPreview(data.content) : '';
 
   return (
     <Card className="bg-accent border-transparent">
@@ -34,7 +46,6 @@ export function InsightCard() {
         <div className="space-y-2">
           <Skeleton className="h-4 w-full" />
           <Skeleton className="h-4 w-5/6" />
-          <Skeleton className="h-4 w-2/3" />
         </div>
       ) : isError ? (
         <div className="flex items-center justify-between gap-3">
@@ -50,9 +61,16 @@ export function InsightCard() {
           </button>
         </div>
       ) : data ? (
-        <div className="[&_strong]:font-semibold [&_h4]:text-accent-foreground">
-          <InsightMarkdown content={data.content} />
-        </div>
+        <>
+          <p className="text-sm text-foreground/80 line-clamp-2">{preview}</p>
+          <Link
+            href="/recommendations"
+            className="inline-flex items-center gap-1 text-xs font-semibold text-accent-foreground hover:underline underline-offset-2 w-fit"
+          >
+            Voir l&apos;analyse complète
+            <ArrowRight className="size-3.5" />
+          </Link>
+        </>
       ) : (
         <p className="text-sm text-foreground/70">
           Pas encore assez de données pour générer une analyse.

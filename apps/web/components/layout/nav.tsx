@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuthStore, useUser } from '@/lib/stores/auth.store';
+import { MobileMoreDrawer } from './mobile-more-drawer';
 
 type NavItem = { href: string; icon: React.ComponentType<{ className?: string }>; label: string };
 
@@ -29,11 +30,12 @@ const desktopNavItems: NavItem[] = [
   { href: '/recommendations', icon: Sparkles,       label: 'Recommandations' },
 ];
 
+// Onglets directs de la barre mobile — le reste des sections vit dans le
+// tiroir "Plus" (MobileMoreDrawer) pour ne pas surcharger une barre à 375px.
 const mobileNavItems: (NavItem | null)[] = [
   { href: '/dashboard',    icon: Home,           label: 'Accueil'      },
-  { href: '/accounts',     icon: Wallet,         label: 'Comptes'      },
-  null,
   { href: '/transactions', icon: ArrowLeftRight, label: 'Transactions' },
+  null,
   { href: '/goals',        icon: Target,         label: 'Épargne'      },
 ];
 
@@ -117,7 +119,7 @@ export function AppNav() {
             </div>
             <button
               onClick={handleLogout}
-              className="text-sidebar-foreground/50 hover:text-sidebar-foreground transition-colors p-1 rounded"
+              className="text-sidebar-foreground/50 hover:text-sidebar-foreground transition-colors p-1 rounded cursor-pointer"
               aria-label="Se déconnecter"
             >
               <LogOut className="size-4" />
@@ -158,6 +160,7 @@ export function AppNav() {
               </Link>
             );
           })}
+          <MobileMoreDrawer isActive={isActive} />
         </div>
       </nav>
     </>
