@@ -10,6 +10,10 @@ export default defineConfig({
     seed: "ts-node -r tsconfig-paths/register prisma/seed.ts",
   },
   datasource: {
-    url: process.env["DATABASE_URL"],
+    // La CLI (migrate/db push) a besoin d'une connexion directe : le pooler
+    // Neon (PgBouncer) ne supporte pas l'advisory lock que `migrate deploy`
+    // utilise, ce qui cause un timeout P1002. DATABASE_URL (pooler) reste
+    // utilisée par le client applicatif dans prisma.service.ts.
+    url: process.env["DIRECT_URL"] ?? process.env["DATABASE_URL"],
   },
 });

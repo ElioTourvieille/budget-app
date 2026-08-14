@@ -5,6 +5,7 @@ import type { Account } from '@/lib/api/types';
 import { BalanceCard } from './balance-card';
 import { BudgetOverviewCard } from './budget-overview-card';
 import { GoalsCard } from './goals-card';
+import { MonthlyOverviewCard } from './monthly-overview-card';
 import { RecentTransactionsCard } from './recent-transactions-card';
 import { InsightCard } from './insight-card';
 
@@ -34,6 +35,8 @@ export function DashboardContent({
         <h1 className="text-xl font-semibold">Bonjour {firstName ?? 'toi'} 👋</h1>
         <p className="text-sm text-muted-foreground mt-0.5">Voici où tu en es ce mois-ci.</p>
       </div>
+
+      <MonthlyOverviewCard />
 
       <InsightCard />
 
