@@ -1,10 +1,12 @@
 'use client';
 
-import { ArrowDownLeft, ArrowUpRight, ArrowLeftRight, Trash2 } from 'lucide-react';
+import { useState } from 'react';
+import { ArrowDownLeft, ArrowUpRight, ArrowLeftRight, Pencil, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useDeleteTransaction } from '@/lib/queries';
 import { cn, formatCurrency, formatShortDate } from '@/lib/utils';
 import type { Transaction, TransactionType } from '@/lib/api/types';
+import { EditTransactionDialog } from './edit-transaction-dialog';
 
 const TYPE_ICON: Record<TransactionType, typeof ArrowDownLeft> = {
   INCOME: ArrowDownLeft,
@@ -14,6 +16,7 @@ const TYPE_ICON: Record<TransactionType, typeof ArrowDownLeft> = {
 
 export function TransactionRow({ transaction }: { transaction: Transaction }) {
   const deleteTransaction = useDeleteTransaction();
+  const [editOpen, setEditOpen] = useState(false);
   const Icon = TYPE_ICON[transaction.type];
   const isIncome = transaction.type === 'INCOME';
   const isExpense = transaction.type === 'EXPENSE';
@@ -63,14 +66,26 @@ export function TransactionRow({ transaction }: { transaction: Transaction }) {
         {formatCurrency(transaction.amount)}
       </p>
 
-      <button
-        type="button"
-        onClick={handleDelete}
-        aria-label="Supprimer la transaction"
-        className="text-muted-foreground hover:text-destructive transition-colors p-1.5 rounded-lg hover:bg-destructive/10 shrink-0"
-      >
-        <Trash2 className="size-4" />
-      </button>
+      <div className="flex items-center shrink-0">
+        <button
+          type="button"
+          onClick={() => setEditOpen(true)}
+          aria-label="Modifier la transaction"
+          className="text-muted-foreground hover:text-foreground transition-colors p-1.5 rounded-lg hover:bg-muted"
+        >
+          <Pencil className="size-4" />
+        </button>
+        <button
+          type="button"
+          onClick={handleDelete}
+          aria-label="Supprimer la transaction"
+          className="text-muted-foreground hover:text-destructive transition-colors p-1.5 rounded-lg hover:bg-destructive/10"
+        >
+          <Trash2 className="size-4" />
+        </button>
+      </div>
+
+      <EditTransactionDialog transaction={transaction} open={editOpen} onOpenChange={setEditOpen} />
     </div>
   );
 }

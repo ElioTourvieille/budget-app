@@ -153,8 +153,19 @@ import {
 
       if (dto.reimbursedAmount !== undefined) {
         const oldReimbursed = Number(existing.reimbursedAmount ?? 0);
-        balanceDelta = dto.reimbursedAmount - oldReimbursed;
+        balanceDelta += dto.reimbursedAmount - oldReimbursed;
         reimbursementStatus = dto.reimbursedAmount > 0 ? 'COMPLETED' : 'PENDING';
+      }
+
+      // Un montant corrigé après coup doit répercuter la différence sur le
+      // solde du compte, sinon celui-ci se désynchronise de l'historique.
+      if (dto.amount !== undefined) {
+        const oldAmount = Number(existing.amount);
+        const amountDiff = dto.amount - oldAmount;
+        if (amountDiff !== 0) {
+          const isIncome = existing.type === 'INCOME';
+          balanceDelta += isIncome ? amountDiff : -amountDiff;
+        }
       }
 
       const updated = await this.prisma.transaction.update({
@@ -173,7 +184,7 @@ import {
         include: { category: true, account: true },
       });
 
-      // Le montant reçu recrédite le compte sur lequel la dépense avait été prélevée
+      // Répercute le(s) delta(s) calculé(s) ci-dessus (montant corrigé et/ou remboursement) sur le compte
       if (balanceDelta !== 0) {
         await this.prisma.account.update({
           where: { id: existing.accountId },

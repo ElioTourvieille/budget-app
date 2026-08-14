@@ -16,7 +16,7 @@ import {
 import { formatCurrency, formatShortDate } from '@/lib/utils';
 
 const CURRENT_YEAR = new Date().getFullYear();
-const PLAFOND_2026 = 7056;
+const PLAFOND_2026 = 7258;
 
 export default function ThirdPillarPage() {
   const list = useGoals({ type: 'THIRD_PILLAR', isCompleted: false });

@@ -163,7 +163,7 @@
 
   html {
     font-size: var(--font-size);
-    color-scheme: light dark;
+    color-scheme: light;
   }
 
   body {
